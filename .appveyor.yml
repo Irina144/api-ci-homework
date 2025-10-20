@@ -1,0 +1,31 @@
+image: Ubuntu2004
+stack: jdk 11
+
+branches:
+  only:
+    - main
+
+build: off
+
+install:
+  - java -jar ./artifacts/app-mbank.jar &
+  - chmod +x gradlew
+  - |
+    echo "Waiting for SUT on http://localhost:9999 ..."
+    for i in {1..30}; do
+      if curl -sSf http://localhost:9999/api/demo > /dev/null || \
+         curl -sSf http://localhost:9999/api/v1/demo/accounts > /dev/null; then
+        echo "SUT is UP"
+        break
+      else
+        echo "Not ready yet ($i)"
+        sleep 2
+      fi
+    done
+
+build_script:
+  - ./gradlew --version
+  - ./gradlew test --no-daemon --refresh-dependencies --stacktrace --info || (
+    echo "Retry in 5s due to network hiccup" && sleep 5 &&
+    ./gradlew test --no-daemon --refresh-dependencies --stacktrace --info
+    )
