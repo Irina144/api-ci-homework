@@ -1,6 +1,9 @@
 image: Ubuntu2004
 stack: jdk 11
 
+environment:
+  JAVA_TOOL_OPTIONS: "-Dhttps.protocols=TLSv1.2"
+
 branches:
   only:
     - main
@@ -25,7 +28,11 @@ install:
 
 build_script:
   - ./gradlew --version
+
   - ./gradlew test --no-daemon --refresh-dependencies --stacktrace --info || (
-    echo "Retry in 5s due to network hiccup" && sleep 5 &&
+    echo "Retry #1 in 5s" && sleep 5 &&
+    ./gradlew test --no-daemon --refresh-dependencies --stacktrace --info
+    ) || (
+    echo "Retry #2 in 10s" && sleep 10 &&
     ./gradlew test --no-daemon --refresh-dependencies --stacktrace --info
     )
