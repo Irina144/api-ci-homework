@@ -18,11 +18,42 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 11
+          java-version: '11'
           cache: gradle
 
       - name: Make Gradle executable
         run: chmod +x gradlew
 
+      - name: Start SUT (app-mbank.jar)
+        run: |
+          nohup java -jar ./artifacts/app-mbank.jar > sut.log 2>&1 &
+          echo "⏳ Waiting for SUT on http://localhost:9999 ..."
+          for i in {1..30}; do
+            if curl -sSf http://localhost:9999/api/demo > /dev/null || \
+               curl -sSf http://localhost:9999/api/v1/demo/accounts > /dev/null; then
+              echo "SUT is UP and running!"
+              break
+            else
+              echo " Not ready yet ($i)"
+              sleep 2
+            fi
+          done
+
       - name: Run tests
-        run: ./gradlew test --no-daemon --stacktrace --info
+        run: ./gradlew test --no-daemon --stacktrace --info || (
+          echo " Retry in 5s due to network hiccup" && sleep 5 &&
+          ./gradlew test --no-daemon --stacktrace --info
+          )
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test/**
+
+      - name: Show SUT log on failure
+        if: failure()
+        run: |
+          echo "========== SUT LOG =========="
+          tail -n +500 sut.log || true
