@@ -1,1 +1,1 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/f6t3w5mx8qw6aco6?svg=true)](https://ci.appveyor.com/project/Irina144/api-ci-homework-rb59a)
+[![CI](https://github.com/Irina144/api-ci-homework/actions/workflows/ci.yml/badge.svg)](https://github.com/Irina144/api-ci-homework/actions/workflows/ci.yml)
